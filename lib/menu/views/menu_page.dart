@@ -1,104 +1,146 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/animation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:infitest/menu/bloc/menu_bloc.dart';
+import 'package:infitest/menu/bloc/menu_event.dart';
+import 'package:infitest/menu/bloc/menu_state.dart';
+import 'package:infitest/menu/models/menu.dart';
 
 class MenuPage extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() => _MenuPage();
+  _MenuPage createState() => _MenuPage();
 }
 
 class _MenuPage extends State<MenuPage> with TickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(vsync: this, initialIndex: 0, length: 7);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 2,
-          bottom: TabBar(
-            controller: _tabController,
-            indicator: BoxDecoration(
-                borderRadius: BorderRadius.circular(40), // Creates border
-                color: Colors.greenAccent),
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.green,
-            isScrollable: true,
-            tabs: <Widget>[
-              Tab(
-                text: "Salads",
-              ),
-              Tab(
-                text: "Salads",
-              ),
-              Tab(
-                text: "Salads",
-              ),
-              Tab(
-                text: "Salads",
-              ),
-              Tab(
-                text: "Salads",
-              ),
-              Tab(
-                text: "Teas",
-              ),
-              Tab(
-                text: "Beverages",
-              ),
-            ],
-          ),
-        ),
-        body: categoryBuilder());
+      body: BlocProvider(
+        create: (_) => MenuBloc(InitialState())..add(GetAllMenu()),
+        child: menuList(),
+      ),
+    );
   }
-}
 
-Widget pageBody() {
-  return Column(
-    children: [
-      Flexible(
-          flex: 1,
-          child: Container(color: Colors.red, child: categoryBuilder())),
-      Flexible(
-          flex: 9,
-          child: Container(color: Colors.blue, child: categoryBuilder())),
-    ],
-  );
-}
+  menuList() {
+    return BlocBuilder<MenuBloc, MenuState>(builder: (context, state) {
+      if (state is LoadedState) {
+        print("loaded");
+        return scaffoldItem(state.menu.categories, context);
+      } else {
+        print("not loaded");
+        return Container(
+          child: Center(
+              child: CircularProgressIndicator(
+            color: Colors.blue,
+          )),
+          color: Colors.white,
+        );
+      }
+    });
+  }
 
-Widget categoryBuilder() {
-  return GridView.count(
-    padding: EdgeInsets.all(10),
-    crossAxisCount: 3,
-    children: [
-      categoryItem(),
-      Text("this is a grid"),
-      Text("this is a grid"),
-      Text("this is a grid"),
-      Text("this is a grid")
-    ],
-    // itemCount: 10, //serviceProviderList.length,
-    // itemBuilder: (BuildContext context, int index) {
-    //   return TextButton(onPressed: () {}, child: Text(" thi is $index"));
-    // },
-  );
-}
+  @override
+  void initState() {}
 
-Widget categoryItem(){
-  return Container(
-    child: Column(
-      children: [
-        Image.network(
-          "https://firebasestorage.googleapis.com/v0/b/infishare-client-test.appspot.com/o/Business%2F9hEyRjsiwXh3afRpeAnn9A2VuTH2%2Fimages%2Fdishes%2FPeach%20Ice%20Jelly%E8%9C%9C%E6%A1%83%E7%BA%96%E6%9E%9C%E8%8C%B6.jpeg?alt=media&token=cb95b20b-cbc5-4663-a241-bc316264c957",
-          width: 100,
-          height:100,
+  Widget scaffoldItem(List<Categories>? categories, BuildContext context) {
+    return DefaultTabController(
+      length: categories!.length,
+      child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            bottom: TabBar(
+              isScrollable: true,
+              indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20), // Creates border
+                  color: Colors.greenAccent),
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.green,
+              tabs: [
+                for (Categories i in categories)
+                  Tab(
+                    text: i.name,
+                  ),
+              ],
+            ),
+          ),
+          body: TabBarView(
+            children: [
+              for (Categories i in categories) itemGrid(i.items, i.name),
+            ],
+          )),
+    );
+  }
+
+  Widget itemGrid(List<Items>? items, String? name) {
+    return items!.length !=0 ?
+     SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("$name",style: TextStyle(color: Colors.green, fontSize: 15)),
+            SizedBox(
+              height: 20,
+            ),
+            new Wrap(
+              direction: Axis.horizontal,
+              crossAxisAlignment: WrapCrossAlignment.start,
+              spacing: 5,
+              runSpacing: 5,
+              children: [
+                for (Items i in items) categoryItem(i),
+              ],
+            )
+          ],
         ),
-      ],
-    ),
-  );
+      ),
+    ):Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Container(child: Text("$name - No items available",style: TextStyle(color: Colors.green, fontSize: 15)),),
+    );
+  }
+
+  Widget categoryItem(Items item) {
+    return Container(
+      decoration: BoxDecoration(
+          border: Border.all(color: Colors.greenAccent)
+      ),
+      width: MediaQuery.of(context).size.width / 3.5,
+      height: 150,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          item.images!.length == 1?
+          Image.network(
+            item.images!.first,
+             width: 70,
+            height: 70,
+            fit: BoxFit.fill,
+          ):Container(),
+          Text(
+            "${item.name}",
+            style: TextStyle(fontSize: 15),
+          ),
+          // Text("${item.description}"),
+          item.soldOut == true
+              ? Text("Sold Out")
+              : priceChecker(item.priceMin!.amount, item.priceMax!.amount,
+                  item.priceMax!.currency)
+        ],
+      ),
+    );
+  }
+
+  Widget priceChecker(minAmt, maxAmt, currency) {
+    if(currency == "USD") currency = "\$";
+    if (maxAmt > minAmt) {
+      return Text("$currency$minAmt-$currency$maxAmt",
+          style: TextStyle(fontSize: 15));
+    } else {
+      return Text("$currency$maxAmt", style: TextStyle(fontSize: 15));
+    }
+  }
 }
