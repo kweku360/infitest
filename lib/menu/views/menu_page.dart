@@ -1,5 +1,4 @@
-import 'package:flutter/animation.dart';
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:infitest/menu/bloc/menu_bloc.dart';
@@ -7,6 +6,7 @@ import 'package:infitest/menu/bloc/menu_event.dart';
 import 'package:infitest/menu/bloc/menu_state.dart';
 import 'package:infitest/menu/models/menu.dart';
 
+/* Main menu page   */
 class MenuPage extends StatefulWidget {
   @override
   _MenuPage createState() => _MenuPage();
@@ -14,22 +14,30 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPage extends State<MenuPage> with TickerProviderStateMixin {
   @override
+  void initState() {}
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      //Call the bloc provider here
       body: BlocProvider(
         create: (_) => MenuBloc(InitialState())..add(GetAllMenu()),
         child: menuList(),
       ),
     );
   }
-
+//Display menu List
   menuList() {
     return BlocBuilder<MenuBloc, MenuState>(builder: (context, state) {
       if (state is LoadedState) {
-        print("loaded");
+        //loaded state active
         return scaffoldItem(state.menu.categories, context);
       } else {
-        print("not loaded");
+        //todo Handle various states apart from LoadedState
+        if(state is ErrorState){
+          return Container(
+            child: Center(child: Text("${state.message}"),));
+        }
         return Container(
           child: Center(
               child: CircularProgressIndicator(
@@ -41,9 +49,7 @@ class _MenuPage extends State<MenuPage> with TickerProviderStateMixin {
     });
   }
 
-  @override
-  void initState() {}
-
+//Build Scaffold for tab bar and tab content
   Widget scaffoldItem(List<Categories>? categories, BuildContext context) {
     return DefaultTabController(
       length: categories!.length,
@@ -58,6 +64,7 @@ class _MenuPage extends State<MenuPage> with TickerProviderStateMixin {
               labelColor: Colors.white,
               unselectedLabelColor: Colors.green,
               tabs: [
+                //loop through categories
                 for (Categories i in categories)
                   Tab(
                     text: i.name,
@@ -65,14 +72,14 @@ class _MenuPage extends State<MenuPage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          body: TabBarView(
+          body: TabBarView( //implement tab bar view
             children: [
               for (Categories i in categories) itemGrid(i.items, i.name),
             ],
           )),
     );
   }
-
+//Display each item as a grid box
   Widget itemGrid(List<Items>? items, String? name) {
     return items!.length !=0 ?
      SingleChildScrollView(
@@ -85,6 +92,7 @@ class _MenuPage extends State<MenuPage> with TickerProviderStateMixin {
             SizedBox(
               height: 20,
             ),
+            //use wrap for safe grid alignment
             new Wrap(
               direction: Axis.horizontal,
               crossAxisAlignment: WrapCrossAlignment.start,
@@ -102,7 +110,7 @@ class _MenuPage extends State<MenuPage> with TickerProviderStateMixin {
       child: Container(child: Text("$name - No items available",style: TextStyle(color: Colors.green, fontSize: 15)),),
     );
   }
-
+//Display individual items inside category
   Widget categoryItem(Items item) {
     return Container(
       decoration: BoxDecoration(
@@ -133,7 +141,7 @@ class _MenuPage extends State<MenuPage> with TickerProviderStateMixin {
       ),
     );
   }
-
+//check for differences in price .and display appropriate currency,
   Widget priceChecker(minAmt, maxAmt, currency) {
     if(currency == "USD") currency = "\$";
     if (maxAmt > minAmt) {

@@ -1,3 +1,4 @@
+/* Menu Class- Plain Dart object */
 class Menu {
   List<Categories>? categories;
   String? error;

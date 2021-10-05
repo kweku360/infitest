@@ -5,6 +5,7 @@ import 'package:infitest/menu/bloc/menu_event.dart';
 import 'package:infitest/menu/bloc/menu_state.dart';
 import 'package:infitest/menu/models/menu_repository.dart';
 
+/* Bloc class for menu */
 class MenuBloc extends Bloc<MenuEvent, MenuState> {
 
   final MenuRepository _menuRepository = MenuRepository();
